@@ -38,8 +38,13 @@ npm start
 <li>EJS (Embedded JavaScript)</li>
 <li>HTML</li>
 <li>CSS</li>
-<br><be>
-
-![Screenshot 2024-05-16 at 11 31 03 AM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/1b7c38e3-44f9-40fe-b892-c506d192e086)
 <br><br>
-![Screenshot 2024-05-16 at 11 31 17 AM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/3f373d91-2e94-4074-a6ca-d60ba857a954)
+
+![Screenshot 2024-05-20 at 10 58 03 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/93a86ca7-8767-4e8e-9ae3-45dc4a17dabc)
+<br><br>
+![Screenshot 2024-05-20 at 10 58 15 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/d37c9390-931f-4993-8ec9-f42afeff2f9a)
+<br><br>
+![Screenshot 2024-05-20 at 11 27 09 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/aee53440-fb7d-480e-9497-6a970c683a2b)
+<br><br>
+![Screenshot 2024-05-20 at 11 27 23 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/1070b0bf-2bd0-4e79-8a6d-2ad595b06ceb)
+<br><br>
