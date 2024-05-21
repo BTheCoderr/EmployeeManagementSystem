@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome</title>
+    <title>Employee Added Successfully</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,29 +29,28 @@
             margin-bottom: 20px;
         }
 
+        p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
         a {
             color: #007bff;
             text-decoration: none;
             font-weight: bold;
-            margin: 0 10px;
-            display: inline-block;
-            padding: 10px 20px;
-            border: 1px solid #007bff;
-            border-radius: 4px;
-            cursor: pointer;
         }
 
         a:hover {
-            background-color: #007bff;
-            color: #fff;
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Employee Management System</h1>
-        <a href="/mysqllogin">Login</a>
-        <a href="/form2database">Register</a>
+        <h1>Employee Added Successfully</h1>
+        <p>Employee <strong><%= firstName %> <%= lastName %></strong> has been successfully added to the database.</p>
+        <p>Thank you for adding the employee!</p>
+        <a href="/form2database">Add Another Employee</a>
     </div>
 </body>
 </html>

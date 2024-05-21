@@ -1,11 +1,9 @@
-<!-- views/addemployeesuccess.ejs -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Added Successfully</title>
+    <title>Login Successful</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,10 +18,9 @@
 
         .container {
             background-color: #fff;
+            padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            max-width: 400px;
             text-align: center;
         }
 
@@ -32,28 +29,30 @@
             margin-bottom: 20px;
         }
 
-        p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
         a {
             color: #007bff;
             text-decoration: none;
             font-weight: bold;
+            margin: 0 10px;
+            display: inline-block;
+            padding: 10px 20px;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
         a:hover {
-            text-decoration: underline;
+            background-color: #007bff;
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Employee Added Successfully</h1>
-        <p>Employee <strong><%= firstName %> <%= lastName %></strong> has been successfully added to the database.</p>
-        <p>Thank you for adding the employee!</p>
-        <a href="/addemployee">Add Another Employee</a>
+        <h1>Login Successful</h1>
+        <p>Welcome, <%= username %>!</p>
+        <a href="/form2database">Register New Employee</a>
+        <a href="/employees">View Employees</a>
     </div>
 </body>
 </html>
