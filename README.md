@@ -40,11 +40,22 @@ npm start
 <li>CSS</li>
 <br><br>
 
-![Screenshot 2024-05-20 at 10 58 03 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/93a86ca7-8767-4e8e-9ae3-45dc4a17dabc)
+
+## Screenshots
+
+
+### Login Page
+![Screenshot 2024-05-20 at 11 26 43 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/d3f9efac-c2a7-43f7-bfb4-359e189af358)
 <br><br>
-![Screenshot 2024-05-20 at 10 58 15 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/d37c9390-931f-4993-8ec9-f42afeff2f9a)
+
+### Add Employee Page
+![Screenshot 2024-05-20 at 11 27 47 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/b4f3be8a-602f-4d23-87fb-01f4951c2bbf)
 <br><br>
-![Screenshot 2024-05-20 at 11 27 09 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/aee53440-fb7d-480e-9497-6a970c683a2b)
+
+### Employee Added Successfully Page
+![Screenshot 2024-05-20 at 11 27 09 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/635c4195-88c3-40ec-932a-f264fee6033a)
 <br><br>
-![Screenshot 2024-05-20 at 11 27 23 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/1070b0bf-2bd0-4e79-8a6d-2ad595b06ceb)
+
+### Employee List Page
+![Screenshot 2024-05-20 at 11 27 23 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/66389994-49a1-4187-9ce9-d02bc3d34645)
 <br><br>
