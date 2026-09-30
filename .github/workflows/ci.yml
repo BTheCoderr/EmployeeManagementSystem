@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 24
       - name: Install dependencies
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
       - name: Syntax checks and coverage gates
         run: npm run ci
 
@@ -38,7 +38,7 @@ jobs:
         with:
           node-version: 24
       - name: Install dependencies
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
       - name: Dependency audit
         run: npm audit --omit=dev --audit-level=high
       - name: Security regression tests

@@ -28,7 +28,7 @@
 | Org model | Employee-to-manager relationships + interactive reporting map |
 | API | Pagination, filtering, sorting, analytics, OpenAPI 3.1 |
 | Security | CSRF, login throttling, CSP, secure headers, request IDs |
-| Quality | Integration tests + GitHub Actions CI |
+| Quality | Integration tests + GitHub Actions CI + locked dependencies |
 | Containerization | Node 24 Docker image + persistent SQLite volume + healthcheck |
 
 ## Architecture
@@ -134,6 +134,8 @@ The integration suite covers migrations, authentication, tampered sessions, secu
 CI now runs the test suite with Node's native coverage collector and enforces baseline floors of **60% lines, 50% functions, and 40% branches**. A separate security job runs focused authorization/session/header/data-leakage regressions plus `npm audit --omit=dev --audit-level=high`.
 
 A third CI job builds the committed Dockerfile, starts the image with production settings, and requires the containerized `/health` endpoint to respond successfully.
+
+Dependencies are committed through `package-lock.json`; CI and Docker use `npm ci` so portfolio reviewers and automated checks install the same resolved dependency graph.
 
 ## Why embedded SQLite?
 
