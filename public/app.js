@@ -284,6 +284,29 @@ $('close-dialog-button').addEventListener('click',() => $('employee-dialog').clo
 $('cancel-dialog-button').addEventListener('click',() => $('employee-dialog').close());
 $('add-employee-button')?.addEventListener('click',() => { state.tasks=[]; state.timeline=[]; fillEmployee(); });
 
+$('restore-backup-button')?.addEventListener('click',() => $('restore-backup-file').click());
+$('restore-backup-file')?.addEventListener('change',async event => {
+  const file=event.target.files?.[0];
+  event.target.value='';
+  if (!file) return;
+  try {
+    const backup=JSON.parse(await file.text());
+    const validation=await api('/api/restore/validate',{method:'POST',body:JSON.stringify(backup)});
+    const summary=validation.summary;
+    const approved=confirm(
+      `Validated PeopleOps backup.\n\nEmployees: ${summary.employees}\nLifecycle tasks: ${summary.tasks}\nTimeline events: ${summary.timelineEvents}\nAudit events: ${summary.auditEvents}\n\nRestore will replace current employee/workflow data but keep sign-in users. Continue?`
+    );
+    if (!approved) return toast('Restore cancelled.');
+    await api('/api/restore',{method:'POST',body:JSON.stringify(backup)});
+    state.page=1;
+    await loadData();
+    toast('Backup restored successfully.');
+  } catch (error) {
+    const issues=error.data?.issues;
+    toast(issues?.length ? issues[0] : error.message);
+  }
+});
+
 let searchTimer;
 $('search-input').addEventListener('input',() => {
   clearTimeout(searchTimer); state.page=1;

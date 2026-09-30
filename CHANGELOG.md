@@ -4,6 +4,9 @@
 ## Unreleased
 
 ### Added
+- validate-first JSON backup restore with relational integrity checks and transactional writes
+- restore preserves authentication users/password hashes while replacing employee workflow data
+- restore authorization, validation, rollback-safe behavior, and round-trip coverage
 - structured before/after field diffs in the employee timeline
 - compensation-redaction coverage for historical change payloads
 - admin-only sanitized JSON backup export for the complete local workspace

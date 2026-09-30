@@ -384,6 +384,153 @@ function createApp(options={}) {
     return /[",\n\r]/.test(text) ? '"' + text.replaceAll('"','""') + '"' : text;
   };
 
+  const validateBackupPayload=backup => {
+    const currentSchema=Number(db.prepare('SELECT MAX(version) AS version FROM schema_migrations').get().version || 0);
+    const issues=[];
+    if (!backup || typeof backup !== 'object') issues.push('Backup must be a JSON object.');
+    if (backup?.format !== 'peopleops-backup') issues.push('Unsupported backup format.');
+    if (Number(backup?.version) !== 1) issues.push('Unsupported backup version.');
+    if (Number(backup?.schema_version) !== currentSchema) issues.push(`Backup schema must match current schema version ${currentSchema}.`);
+
+    const requiredArrays=['employees','lifecycle_tasks','employee_events','audit_events'];
+    for (const key of requiredArrays) {
+      if (!Array.isArray(backup?.[key])) issues.push(`${key} must be an array.`);
+      else if (backup[key].length > 10000) issues.push(`${key} exceeds the 10,000-record restore limit.`);
+    }
+
+    const employees=Array.isArray(backup?.employees) ? backup.employees : [];
+    const employeeIds=new Set();
+    const emails=new Set();
+    for (const employee of employees) {
+      const id=Number(employee?.id);
+      const email=String(employee?.email || '').trim().toLowerCase();
+      if (!Number.isInteger(id) || id < 1) issues.push('Every employee needs a positive integer id.');
+      if (employeeIds.has(id)) issues.push(`Duplicate employee id: ${id}.`);
+      employeeIds.add(id);
+      if (!email) issues.push(`Employee ${id || '?'} is missing an email.`);
+      if (emails.has(email)) issues.push(`Duplicate employee email: ${email}.`);
+      emails.add(email);
+      if (!allowedStatuses.has(employee?.status)) issues.push(`Employee ${id || '?'} has an invalid status.`);
+      if (!allowedEmployment.has(employee?.employment_type)) issues.push(`Employee ${id || '?'} has an invalid employment type.`);
+    }
+
+    for (const employee of employees) {
+      const managerId=Number(employee?.manager_id || 0);
+      if (managerId && !employeeIds.has(managerId)) issues.push(`Employee ${employee.id} references missing manager ${managerId}.`);
+      if (managerId && managerId === Number(employee.id)) issues.push(`Employee ${employee.id} cannot manage themselves.`);
+    }
+    for (const task of Array.isArray(backup?.lifecycle_tasks) ? backup.lifecycle_tasks : []) {
+      if (!employeeIds.has(Number(task?.employee_id))) issues.push(`Task ${task?.id || '?'} references a missing employee.`);
+      if (!['onboarding','offboarding'].includes(task?.phase)) issues.push(`Task ${task?.id || '?'} has an invalid phase.`);
+    }
+    for (const event of Array.isArray(backup?.employee_events) ? backup.employee_events : []) {
+      if (!employeeIds.has(Number(event?.employee_id))) issues.push(`Employee event ${event?.id || '?'} references a missing employee.`);
+    }
+
+    return {
+      valid:issues.length === 0,
+      issues:[...new Set(issues)].slice(0,50),
+      summary:{
+        employees:employees.length,
+        tasks:Array.isArray(backup?.lifecycle_tasks) ? backup.lifecycle_tasks.length : 0,
+        timelineEvents:Array.isArray(backup?.employee_events) ? backup.employee_events.length : 0,
+        auditEvents:Array.isArray(backup?.audit_events) ? backup.audit_events.length : 0,
+        schemaVersion:Number(backup?.schema_version || 0)
+      }
+    };
+  };
+
+  const restoreBackupPayload=backup => {
+    const validation=validateBackupPayload(backup);
+    if (!validation.valid) return validation;
+
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      db.exec('DELETE FROM lifecycle_tasks; DELETE FROM employee_events; DELETE FROM audit_events; DELETE FROM employees;');
+
+      const insertEmployee=db.prepare(`
+        INSERT INTO employees (
+          id,first_name,last_name,email,department,job_title,location,employment_type,status,
+          manager_name,manager_id,start_date,end_date,salary,onboarding_progress,created_at,updated_at,version
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      `);
+      for (const employee of backup.employees) {
+        insertEmployee.run(
+          Number(employee.id),safeText(employee.first_name,60),safeText(employee.last_name,60),
+          safeText(employee.email,180).toLowerCase(),safeText(employee.department,80),safeText(employee.job_title,100),
+          safeText(employee.location,100),employee.employment_type,employee.status,safeText(employee.manager_name,120) || null,
+          null,safeText(employee.start_date,20),safeText(employee.end_date,20) || null,
+          employee.salary == null ? null : Math.max(0,Math.round(Number(employee.salary) || 0)),
+          Math.max(0,Math.min(100,Number(employee.onboarding_progress) || 0)),
+          safeText(employee.created_at,40) || new Date().toISOString(),
+          safeText(employee.updated_at,40) || new Date().toISOString(),
+          Math.max(1,Number(employee.version) || 1)
+        );
+      }
+      const updateManager=db.prepare('UPDATE employees SET manager_id=?,manager_name=? WHERE id=?');
+      for (const employee of backup.employees) {
+        const managerId=Number(employee.manager_id || 0);
+        updateManager.run(managerId || null,safeText(employee.manager_name,120) || null,Number(employee.id));
+      }
+
+      const insertTask=db.prepare(`
+        INSERT INTO lifecycle_tasks (
+          id,employee_id,phase,title,owner_name,due_date,completed_at,created_by_user_id,version,created_at,updated_at
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+      `);
+      for (const task of backup.lifecycle_tasks) {
+        insertTask.run(
+          Number(task.id),Number(task.employee_id),task.phase,safeText(task.title,180),safeText(task.owner_name,120) || null,
+          safeText(task.due_date,20) || null,safeText(task.completed_at,50) || null,null,Math.max(1,Number(task.version) || 1),
+          safeText(task.created_at,50) || new Date().toISOString(),safeText(task.updated_at,50) || new Date().toISOString()
+        );
+      }
+
+      const insertEvent=db.prepare(`
+        INSERT INTO employee_events (id,employee_id,actor_user_id,actor_name,event_type,detail,changes_json,created_at)
+        VALUES (?,?,?,?,?,?,?,?)
+      `);
+      for (const event of backup.employee_events) {
+        insertEvent.run(
+          Number(event.id),Number(event.employee_id),null,safeText(event.actor_name,120) || 'Imported user',
+          safeText(event.event_type,80),safeText(event.detail,500),
+          event.changes_json == null ? null : String(event.changes_json).slice(0,10000),
+          safeText(event.created_at,50) || new Date().toISOString()
+        );
+      }
+
+      const insertAudit=db.prepare(`
+        INSERT INTO audit_events (id,actor_user_id,actor_name,action,entity_type,entity_id,detail,created_at)
+        VALUES (?,?,?,?,?,?,?,?)
+      `);
+      for (const event of backup.audit_events) {
+        insertAudit.run(
+          Number(event.id),null,safeText(event.actor_name,120) || 'Imported user',safeText(event.action,80),
+          safeText(event.entity_type,80),event.entity_id == null ? null : Number(event.entity_id),
+          safeText(event.detail,500),safeText(event.created_at,50) || new Date().toISOString()
+        );
+      }
+
+      db.exec('COMMIT');
+      return validation;
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
+  };
+
+  app.post('/api/restore/validate',requireAuth,requireRole('admin'),requireCsrf,(req,res) => {
+    const validation=validateBackupPayload(req.body);
+    res.status(validation.valid ? 200 : 400).json(validation);
+  });
+
+  app.post('/api/restore',requireAuth,requireRole('admin'),requireCsrf,(req,res) => {
+    const validation=restoreBackupPayload(req.body);
+    if (!validation.valid) return res.status(400).json(validation);
+    audit(db,req.user,'restore','backup',null,`Restored local PeopleOps backup with ${validation.summary.employees} employees`);
+    res.json({ok:true,...validation});
+  });
+
   app.get('/api/export',requireAuth,requireRole('admin'),(req,res) => {
     const schemaVersion=Number(db.prepare('SELECT MAX(version) AS version FROM schema_migrations').get().version || 0);
     const backup={

@@ -89,6 +89,16 @@
       "get": {
         "summary": "Download employee directory CSV (admin)"
       }
+    },
+    "/api/restore/validate": {
+      "post": {
+        "summary": "Validate a PeopleOps backup without writing data (admin)"
+      }
+    },
+    "/api/restore": {
+      "post": {
+        "summary": "Restore validated employee/workflow data while preserving authentication users (admin)"
+      }
     }
   }
 }

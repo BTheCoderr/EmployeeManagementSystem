@@ -102,6 +102,8 @@ Human-readable API docs are available at `/docs`. The OpenAPI contract lives at 
 
 Admins can also download a complete sanitized JSON backup from `/api/export` or a spreadsheet-friendly employee CSV from `/api/employees.csv`. Backup user records intentionally exclude password hashes.
 
+The dashboard can restore those JSON backups through a validate-first workflow. Validation checks backup/schema versions, duplicate employee identifiers/emails, statuses, employment types, manager relationships, lifecycle phases, and employee references before any write. Restore replaces employee/workflow/history data inside one SQLite transaction while preserving the destination instance's authentication users and password hashes.
+
 Migrations live in `migrations/` and apply in numeric order. Applied versions are recorded inside the local database in `schema_migrations`, so the schema can evolve without replacing the database file.
 
 ## Tests

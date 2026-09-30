@@ -241,3 +241,65 @@ test('employee timeline stores useful diffs while redacting compensation values'
   assert.deepEqual(event.changes.salary,{from:'[restricted]',to:'[restricted]'});
   assert.equal(JSON.stringify(event).includes(String(employee.salary)),false);
 });
+
+
+test('backup restore validates before writes and round-trips employee data', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+
+  const backup=await h.request('/api/export',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  backup.employees[0].job_title='Restored Portfolio Role';
+
+  const validation=await h.request('/api/restore/validate',{
+    method:'POST',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify(backup)
+  });
+  assert.equal(validation.status,200);
+  assert.equal((await validation.json()).valid,true);
+
+  const restore=await h.request('/api/restore',{
+    method:'POST',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify(backup)
+  });
+  assert.equal(restore.status,200);
+
+  const employee=await h.request('/api/employees/' + backup.employees[0].id,{headers:{cookie:admin.cookie}}).then(r => r.json());
+  assert.equal(employee.job_title,'Restored Portfolio Role');
+
+  const session=await h.request('/api/session',{headers:{cookie:admin.cookie}});
+  assert.equal(session.status,200);
+});
+
+test('invalid backup restore is rejected without mutating employee data', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+  const before=await h.request('/api/employees/1',{headers:{cookie:admin.cookie}}).then(r => r.json());
+
+  const invalid={
+    format:'peopleops-backup',version:1,schema_version:2,
+    employees:[{...before,manager_id:99999}],
+    lifecycle_tasks:[],employee_events:[],audit_events:[]
+  };
+  const response=await h.request('/api/restore',{
+    method:'POST',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify(invalid)
+  });
+  assert.equal(response.status,400);
+  const after=await h.request('/api/employees/1',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  assert.equal(after.email,before.email);
+  assert.equal(after.job_title,before.job_title);
+});
+
+test('backup restore is admin-only', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const viewer=await h.login('viewer@peopleops.local','ViewerDemo2026!');
+  const response=await h.request('/api/restore/validate',{
+    method:'POST',
+    headers:{cookie:viewer.cookie,'Content-Type':'application/json','X-CSRF-Token':viewer.csrf},
+    body:JSON.stringify({})
+  });
+  assert.equal(response.status,403);
+});
