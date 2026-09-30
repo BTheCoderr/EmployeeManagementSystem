@@ -7,6 +7,14 @@
 **What it demonstrates:** Node.js · Express · SQLite · schema migrations · REST APIs · RBAC/security · tests/CI.
 <!-- repo-intro:end -->
 
+<!-- portfolio-refresh:start -->
+## Why this project stands out
+
+PeopleOps Console is intentionally backend-heavy. It demonstrates the parts of business software that are easy to skip in a demo but matter in production: migrations, RBAC, auditability, stale-write protection, lifecycle workflows, restore validation, field-level sensitivity, API contracts, and integration tests.
+
+**No hosted database is required.** Node's embedded SQLite keeps the full relational demo portable while still exercising real schema evolution, transactions, constraints, concurrency checks, and backup/restore behavior.
+<!-- portfolio-refresh:end -->
+
 ![CI](https://github.com/BTheCoderr/EmployeeManagementSystem/actions/workflows/ci.yml/badge.svg)
 
 **PeopleOps Console uses a $0-first architecture.** The complete relational backend runs on Node's embedded SQLite support, so there is no Supabase project, hosted Postgres instance, cloud database account, or paid database service required.
