@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   lockfile:
-    if: \${{ hashFiles('package-lock.json') == '' }}
+    if: ${{ hashFiles('package-lock.json') == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
