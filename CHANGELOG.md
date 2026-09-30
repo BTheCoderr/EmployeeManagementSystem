@@ -4,6 +4,9 @@
 ## Unreleased
 
 ### Added
+- Node 24 Docker image with non-root runtime and application healthcheck
+- Docker Compose local environment with persistent SQLite named volume
+- production-style Docker environment template and repository-level container configuration tests
 - native Node test coverage reporting with enforced line/function/branch floors
 - dedicated security regression suite for sessions, RBAC, CSRF, headers, and sensitive-field leakage
 - separate CI dependency-audit security job

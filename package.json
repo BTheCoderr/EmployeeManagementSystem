@@ -1,6 +1,6 @@
 {
   "name": "peopleops-console",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "A local-first employee operations backend with embedded SQLite, migrations, RBAC, lifecycle workflows, optimistic concurrency, OpenAPI, tests, and CI.",
   "main": "server.js",

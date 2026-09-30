@@ -29,6 +29,7 @@
 | API | Pagination, filtering, sorting, analytics, OpenAPI 3.1 |
 | Security | CSRF, login throttling, CSP, secure headers, request IDs |
 | Quality | Integration tests + GitHub Actions CI |
+| Containerization | Node 24 Docker image + persistent SQLite volume + healthcheck |
 
 ## Architecture
 
@@ -95,6 +96,18 @@ npm start
 ```
 
 Then open `http://localhost:3000`. No external database setup is required.
+
+### Run with Docker
+
+For a one-command local environment:
+
+```bash
+docker compose up --build
+```
+
+The Compose setup mounts a named `peopleops-data` volume at `/app/data`, so the embedded SQLite database survives container replacement. It also includes a healthcheck against `/health`.
+
+The committed Compose file intentionally runs in development/demo mode for local evaluation. For production-style container execution, use the variables shown in `.env.docker.example` and provide your own session secret and role passwords. No external database container is necessary.
 
 ## API and migrations
 
