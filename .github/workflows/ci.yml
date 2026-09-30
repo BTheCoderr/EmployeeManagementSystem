@@ -43,3 +43,35 @@ jobs:
         run: npm audit --omit=dev --audit-level=high
       - name: Security regression tests
         run: node --test tests/security.test.js
+
+  docker:
+    name: docker image smoke test
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t peopleops-console:ci .
+      - name: Start production container
+        run: |
+          docker run -d --name peopleops-ci -p 3000:3000 \
+            -e NODE_ENV=production \
+            -e SESSION_SECRET=ci-container-secret-not-for-production \
+            -e DEMO_ADMIN_PASSWORD=ci-admin-password \
+            -e DEMO_MANAGER_PASSWORD=ci-manager-password \
+            -e DEMO_VIEWER_PASSWORD=ci-viewer-password \
+            peopleops-console:ci
+      - name: Verify health endpoint
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs peopleops-ci
+          exit 1
+      - name: Clean up container
+        if: always()
+        run: docker rm -f peopleops-ci || true

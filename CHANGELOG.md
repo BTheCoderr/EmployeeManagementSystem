@@ -4,6 +4,7 @@
 ## Unreleased
 
 ### Added
+- CI Docker image build and production-container health smoke test
 - Node 24 Docker image with non-root runtime and application healthcheck
 - Docker Compose local environment with persistent SQLite named volume
 - production-style Docker environment template and repository-level container configuration tests

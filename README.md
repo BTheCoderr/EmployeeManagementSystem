@@ -133,6 +133,8 @@ The integration suite covers migrations, authentication, tampered sessions, secu
 
 CI now runs the test suite with Node's native coverage collector and enforces baseline floors of **60% lines, 50% functions, and 40% branches**. A separate security job runs focused authorization/session/header/data-leakage regressions plus `npm audit --omit=dev --audit-level=high`.
 
+A third CI job builds the committed Dockerfile, starts the image with production settings, and requires the containerized `/health` endpoint to respond successfully.
+
 ## Why embedded SQLite?
 
 SQLite still gives this project a real relational database: tables, constraints, foreign keys, indexes, migrations, transactions, and query behavior. The difference is that it is an embedded local file rather than infrastructure we have to buy.
