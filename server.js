@@ -307,7 +307,7 @@ function createApp(options={}) {
     }
 
     const changes=sanitizedChanges(existing,next,[...editable,'manager_name']);
-    if (!Object.keys(changes).length return res.json(serializeEmployee(existing,req.user.role));
+    if (!Object.keys(changes).length) return res.json(serializeEmployee(existing,req.user.role));
 
     const result=db.prepare(`
       UPDATE employees SET
