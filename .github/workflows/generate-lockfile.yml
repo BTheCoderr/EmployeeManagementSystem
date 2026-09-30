@@ -1,0 +1,27 @@
+name: Generate lockfile
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  lockfile:
+    if: \${{ hashFiles('package-lock.json') == '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Generate package lock
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Emit package lock
+        run: |
+          echo "LOCKFILE_BEGIN"
+          base64 -w0 package-lock.json
+          echo
+          echo "LOCKFILE_END"
