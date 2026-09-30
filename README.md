@@ -25,7 +25,7 @@
 | Concurrency | Version checks reject stale employee/task updates |
 | Lifecycle | Structured onboarding and offboarding workflows |
 | History | Employee timeline + operational audit trail |
-| Org model | Employee-to-manager relationships |
+| Org model | Employee-to-manager relationships + interactive reporting map |
 | API | Pagination, filtering, sorting, analytics, OpenAPI 3.1 |
 | Security | CSRF, login throttling, CSP, secure headers, request IDs |
 | Quality | Integration tests + GitHub Actions CI |
@@ -47,6 +47,10 @@ flowchart LR
 ```
 
 The database defaults to `data/peopleops.sqlite`. It is created automatically and ignored by Git.
+
+## Team structure
+
+The dashboard renders the same manager relationships used by the API as an interactive reporting map. Selecting a person from the reporting tree opens the employee record, lifecycle checklist, and timeline without creating a separate source of truth for organization data.
 
 ## Lifecycle workflows
 

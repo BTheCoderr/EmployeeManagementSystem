@@ -173,3 +173,15 @@ test('OpenAPI contract is served locally',async t => {
   const response=await h.request('/api/openapi.json'),document=await response.json();
   assert.equal(response.status,200); assert.equal(document.openapi,'3.1.0'); assert.ok(document.paths['/api/employees']);
 });
+
+
+test('org endpoint exposes stored manager relationships', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const auth=await h.login('viewer@peopleops.local','ViewerDemo2026!');
+  const org=await h.request('/api/org',{headers:{cookie:auth.cookie}}).then(r => r.json());
+  const jordan=org.find(person => person.first_name === 'Jordan' && person.last_name === 'Lee');
+  const avery=org.find(person => person.first_name === 'Avery' && person.last_name === 'Morgan');
+  assert.ok(jordan);
+  assert.ok(avery);
+  assert.equal(Number(avery.manager_id),Number(jordan.id));
+});

@@ -76,6 +76,44 @@ function renderActivity() {
   `).join('') : '<div class="empty">No activity yet.</div>';
 }
 
+function renderOrg() {
+  const people=new Map(state.org.map(person => [Number(person.id),person]));
+  const children=new Map();
+  for (const person of state.org) {
+    const managerId=Number(person.manager_id || 0);
+    if (!managerId || !people.has(managerId) || managerId === Number(person.id)) continue;
+    const list=children.get(managerId) || [];
+    list.push(person);
+    children.set(managerId,list);
+  }
+
+  const roots=state.org.filter(person => {
+    const managerId=Number(person.manager_id || 0);
+    return !managerId || !people.has(managerId) || managerId === Number(person.id);
+  });
+
+  const renderNode=(person,depth=0,seen=new Set()) => {
+    if (seen.has(Number(person.id))) return '';
+    const nextSeen=new Set(seen);
+    nextSeen.add(Number(person.id));
+    const reports=(children.get(Number(person.id)) || []).sort((a,b) => a.last_name.localeCompare(b.last_name));
+    return `
+      <article class="org-node depth-${Math.min(depth,3)}">
+        <button type="button" class="org-person" data-org-employee-id="${person.id}">
+          <span class="avatar small">${escapeHtml(person.first_name[0] + person.last_name[0])}</span>
+          <span><strong>${escapeHtml(person.first_name)} ${escapeHtml(person.last_name)}</strong><small>${escapeHtml(person.job_title)} · ${escapeHtml(person.department)}</small></span>
+          <em>${reports.length} report${reports.length === 1 ? '' : 's'}</em>
+        </button>
+        ${reports.length ? '<div class="org-children">' + reports.map(report => renderNode(report,depth+1,nextSeen)).join('') + '</div>' : ''}
+      </article>
+    `;
+  };
+
+  $('org-chart').innerHTML=roots.length
+    ? roots.sort((a,b) => a.last_name.localeCompare(b.last_name)).map(person => renderNode(person)).join('')
+    : '<div class="empty">No reporting relationships yet.</div>';
+}
+
 function renderManagerOptions(employee=null) {
   $('manager-id').innerHTML='<option value="">No manager</option>' + state.org
     .filter(person => person.status !== 'offboarded' && person.id !== employee?.id)
@@ -111,7 +149,7 @@ async function loadData() {
   const previousDepartment=$('department-filter').value;
   $('department-filter').innerHTML='<option value="">All departments</option>' + state.departments.map(name => `<option>${escapeHtml(name)}</option>`).join('');
   $('department-filter').value=previousDepartment;
-  renderStats(); renderEmployees(); renderActivity(); renderBars('department-bars',analytics.departments); renderBars('employment-bars',analytics.employmentTypes);
+  renderStats(); renderEmployees(); renderActivity(); renderBars('department-bars',analytics.departments); renderBars('employment-bars',analytics.employmentTypes); renderOrg();
 }
 
 async function loadEmployeeDetails(id) {
@@ -148,6 +186,11 @@ function fillEmployee(employee=null) {
   if (employee) { renderTasks(); renderTimeline(); }
   $('employee-dialog').showModal();
 }
+
+$('org-chart').addEventListener('click',event => {
+  const button=event.target.closest('[data-org-employee-id]');
+  if (button) loadEmployeeDetails(Number(button.dataset.orgEmployeeId)).catch(error => toast(error.message));
+});
 
 $('employee-table-body').addEventListener('click',event => {
   const button=event.target.closest('[data-employee-id]');

@@ -1,6 +1,12 @@
 
 # Changelog
 
+## Unreleased
+
+### Added
+- interactive manager/direct-report team structure view backed by the existing org API
+- reporting-relationship integration coverage
+
 ## 2.1.0 — 2026-09-30
 
 ### Added
