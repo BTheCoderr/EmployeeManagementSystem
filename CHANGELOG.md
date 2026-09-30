@@ -4,6 +4,9 @@
 ## Unreleased
 
 ### Added
+- admin-only sanitized JSON backup export for the complete local workspace
+- admin-only employee CSV export for portable directory data
+- export RBAC and sensitive-field tests
 - interactive manager/direct-report team structure view backed by the existing org API
 - reporting-relationship integration coverage
 

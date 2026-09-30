@@ -98,6 +98,8 @@ Then open `http://localhost:3000`. No external database setup is required.
 
 Human-readable API docs are available at `/docs`. The OpenAPI contract lives at `docs/openapi.json` and is also served from `/api/openapi.json`.
 
+Admins can also download a complete sanitized JSON backup from `/api/export` or a spreadsheet-friendly employee CSV from `/api/employees.csv`. Backup user records intentionally exclude password hashes.
+
 Migrations live in `migrations/` and apply in numeric order. Applied versions are recorded inside the local database in `schema_migrations`, so the schema can evolve without replacing the database file.
 
 ## Tests

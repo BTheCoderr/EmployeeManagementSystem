@@ -379,6 +379,42 @@ function createApp(options={}) {
     res.json(db.prepare('SELECT * FROM lifecycle_tasks WHERE id=?').get(task.id));
   });
 
+  const csvCell=value => {
+    const text=String(value ?? '');
+    return /[",\n\r]/.test(text) ? '"' + text.replaceAll('"','""') + '"' : text;
+  };
+
+  app.get('/api/export',requireAuth,requireRole('admin'),(req,res) => {
+    const schemaVersion=Number(db.prepare('SELECT MAX(version) AS version FROM schema_migrations').get().version || 0);
+    const backup={
+      format:'peopleops-backup',
+      version:1,
+      generated_at:new Date().toISOString(),
+      schema_version:schemaVersion,
+      users:db.prepare('SELECT id,email,name,role,created_at FROM users ORDER BY id').all(),
+      employees:db.prepare('SELECT * FROM employees ORDER BY id').all(),
+      lifecycle_tasks:db.prepare('SELECT * FROM lifecycle_tasks ORDER BY id').all(),
+      employee_events:db.prepare('SELECT * FROM employee_events ORDER BY id').all(),
+      audit_events:db.prepare('SELECT * FROM audit_events ORDER BY id').all(),
+      schema_migrations:db.prepare('SELECT * FROM schema_migrations ORDER BY version').all()
+    };
+    audit(db,req.user,'export','backup',null,'Exported local PeopleOps JSON backup');
+    const stamp=new Date().toISOString().slice(0,10);
+    res.setHeader('Content-Disposition',`attachment; filename="peopleops-backup-${stamp}.json"`);
+    res.json(backup);
+  });
+
+  app.get('/api/employees.csv',requireAuth,requireRole('admin'),(req,res) => {
+    const rows=db.prepare('SELECT * FROM employees ORDER BY last_name,first_name').all();
+    const columns=['id','first_name','last_name','email','department','job_title','location','employment_type','status','manager_name','start_date','end_date','salary','onboarding_progress','version'];
+    const csv=[columns.join(','),...rows.map(row => columns.map(column => csvCell(row[column])).join(','))].join('\n');
+    audit(db,req.user,'export','employees',null,'Exported employee directory CSV');
+    const stamp=new Date().toISOString().slice(0,10);
+    res.setHeader('Content-Type','text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition',`attachment; filename="peopleops-employees-${stamp}.csv"`);
+    res.send(csv);
+  });
+
   app.get('/api/audit',requireAuth,requireRole('admin','manager'),(req,res) => {
     res.json(db.prepare('SELECT * FROM audit_events ORDER BY id DESC LIMIT 75').all());
   });

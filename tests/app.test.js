@@ -185,3 +185,34 @@ test('org endpoint exposes stored manager relationships', async t => {
   assert.ok(avery);
   assert.equal(Number(avery.manager_id),Number(jordan.id));
 });
+
+
+test('admin backup export is portable and excludes password hashes', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+  const response=await h.request('/api/export',{headers:{cookie:admin.cookie}});
+  assert.equal(response.status,200);
+  assert.match(response.headers.get('content-disposition'),/peopleops-backup-/);
+  const backup=await response.json();
+  assert.equal(backup.format,'peopleops-backup');
+  assert.equal(backup.schema_version,2);
+  assert.ok(backup.employees.length >= 8);
+  assert.ok(backup.lifecycle_tasks.length > 0);
+  assert.ok(backup.users.length >= 3);
+  assert.equal(backup.users.some(user => Object.prototype.hasOwnProperty.call(user,'password_hash')),false);
+});
+
+test('backup and CSV exports are admin-only', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const viewer=await h.login('viewer@peopleops.local','ViewerDemo2026!');
+  assert.equal((await h.request('/api/export',{headers:{cookie:viewer.cookie}})).status,403);
+  assert.equal((await h.request('/api/employees.csv',{headers:{cookie:viewer.cookie}})).status,403);
+
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+  const csv=await h.request('/api/employees.csv',{headers:{cookie:admin.cookie}});
+  assert.equal(csv.status,200);
+  assert.match(csv.headers.get('content-type'),/^text\/csv/);
+  const text=await csv.text();
+  assert.ok(text.startsWith('id,first_name,last_name'));
+  assert.ok(text.includes('avery.morgan@example.test'));
+});

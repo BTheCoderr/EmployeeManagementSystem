@@ -79,6 +79,16 @@
       "get": {
         "summary": "Recent audit events (admin/manager)"
       }
+    },
+    "/api/export": {
+      "get": {
+        "summary": "Download sanitized full local backup (admin)"
+      }
+    },
+    "/api/employees.csv": {
+      "get": {
+        "summary": "Download employee directory CSV (admin)"
+      }
     }
   }
 }
