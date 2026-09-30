@@ -1,107 +1,81 @@
+
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="PeopleOps Console — employee lifecycle, RBAC, audit history, and operational visibility.">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="PeopleOps Console — employee lifecycle, RBAC, audit history, workflows, and operational visibility.">
   <meta name="csrf-token" content="<%= csrf %>">
-  <title>PeopleOps Console — Employee Operations</title>
-  <link rel="stylesheet" href="/assets/styles.css">
+  <title>PeopleOps Console — Employee Operations</title><link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body class="app-page" data-role="<%= user.role %>">
   <aside class="app-sidebar">
     <a href="/" class="brand"><span>PO</span><div><strong>PeopleOps</strong><small>Console</small></div></a>
-    <nav>
-      <button class="nav-item active" type="button" data-section="overview">Overview</button>
-      <button class="nav-item" type="button" data-section="directory">Directory</button>
-      <% if (user.role !== 'viewer') { %><button class="nav-item" type="button" data-section="activity">Activity</button><% } %>
-    </nav>
-    <div class="sidebar-user">
-      <span class="avatar"><%= user.name.split(' ').map(part => part[0]).join('').slice(0,2) %></span>
-      <div><strong><%= user.name %></strong><small><%= user.role %></small></div>
-    </div>
+    <nav><button class="nav-item active" type="button">Overview</button><a class="nav-item link-item" href="/docs">API docs</a></nav>
+    <div class="sidebar-user"><span class="avatar"><%= user.name.split(' ').map(part => part[0]).join('').slice(0,2) %></span><div><strong><%= user.name %></strong><small><%= user.role %></small></div></div>
   </aside>
 
   <main class="app-main">
     <header class="app-header">
-      <div>
-        <span class="eyebrow">PEOPLE OPERATIONS</span>
-        <h1>Workforce overview</h1>
-      </div>
+      <div><span class="eyebrow">PEOPLE OPERATIONS</span><h1>Workforce overview</h1></div>
       <div class="header-actions">
         <% if (user.role === 'admin') { %><button class="primary" id="add-employee-button" type="button">+ Add employee</button><% } %>
-        <form method="post" action="/logout">
-          <input type="hidden" name="csrf" value="<%= csrf %>">
-          <button class="ghost" type="submit">Sign out</button>
-        </form>
+        <form method="post" action="/logout"><input type="hidden" name="csrf" value="<%= csrf %>"><button class="ghost" type="submit">Sign out</button></form>
       </div>
     </header>
 
     <section class="stat-grid" id="stat-grid"></section>
 
+    <section class="analytics-grid">
+      <article class="panel analytics-panel"><div class="panel-head"><div><span class="eyebrow">HEADCOUNT</span><h2>By department</h2></div></div><div class="bar-list" id="department-bars"></div></article>
+      <article class="panel analytics-panel"><div class="panel-head"><div><span class="eyebrow">WORKFORCE MIX</span><h2>Employment types</h2></div></div><div class="bar-list" id="employment-bars"></div></article>
+    </section>
+
     <section class="content-grid">
       <article class="panel directory-panel">
-        <div class="panel-head">
-          <div><span class="eyebrow">DIRECTORY</span><h2>Employees</h2></div>
-          <span class="result-count" id="result-count">Loading…</span>
-        </div>
+        <div class="panel-head"><div><span class="eyebrow">DIRECTORY</span><h2>Employees</h2></div><span class="result-count" id="result-count">Loading…</span></div>
         <div class="filters">
           <input id="search-input" type="search" placeholder="Search name, email, or title">
           <select id="department-filter"><option value="">All departments</option></select>
-          <select id="status-filter">
-            <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="leave">On leave</option>
-            <option value="offboarded">Offboarded</option>
-          </select>
+          <select id="status-filter"><option value="">All statuses</option><option value="active">Active</option><option value="leave">On leave</option><option value="offboarded">Offboarded</option></select>
+          <select id="sort-filter"><option value="last_name">Sort: last name</option><option value="first_name">Sort: first name</option><option value="department">Sort: department</option><option value="start_date">Sort: start date</option><option value="status">Sort: status</option></select>
         </div>
-        <div class="table-shell">
-          <table>
-            <thead><tr><th>Employee</th><th>Role</th><th>Department</th><th>Status</th><th>Onboarding</th><th></th></tr></thead>
-            <tbody id="employee-table-body"></tbody>
-          </table>
-        </div>
+        <div class="table-shell"><table><thead><tr><th>Employee</th><th>Role</th><th>Department</th><th>Status</th><th>Onboarding</th><th></th></tr></thead><tbody id="employee-table-body"></tbody></table></div>
+        <div class="pagination"><button class="ghost" id="previous-page-button" type="button">← Previous</button><span id="page-label">Page 1</span><button class="ghost" id="next-page-button" type="button">Next →</button></div>
       </article>
-
-      <aside class="panel activity-panel" id="activity-panel">
-        <div class="panel-head"><div><span class="eyebrow">AUDIT TRAIL</span><h2>Recent activity</h2></div></div>
-        <div class="activity-list" id="activity-list"></div>
-      </aside>
+      <aside class="panel activity-panel" id="activity-panel"><div class="panel-head"><div><span class="eyebrow">AUDIT TRAIL</span><h2>Recent activity</h2></div></div><div class="activity-list" id="activity-list"></div></aside>
     </section>
   </main>
 
   <dialog id="employee-dialog">
-    <form method="dialog" class="dialog-card" id="employee-form">
-      <div class="dialog-head">
-        <div><span class="eyebrow">EMPLOYEE RECORD</span><h2 id="employee-dialog-title">Employee</h2></div>
-        <button type="button" class="icon-button" id="close-dialog-button" aria-label="Close">×</button>
-      </div>
-      <input type="hidden" id="employee-id">
+    <form class="dialog-card" id="employee-form">
+      <div class="dialog-head"><div><span class="eyebrow">EMPLOYEE RECORD</span><h2 id="employee-dialog-title">Employee</h2></div><button type="button" class="icon-button" id="close-dialog-button" aria-label="Close">×</button></div>
+      <input type="hidden" id="employee-id"><input type="hidden" id="employee-version">
       <div class="form-grid">
-        <label>First name<input id="first-name" required></label>
-        <label>Last name<input id="last-name" required></label>
+        <label>First name<input id="first-name" required></label><label>Last name<input id="last-name" required></label>
         <label class="wide-field">Email<input id="employee-email" type="email" required></label>
-        <label>Department<input id="department" required></label>
-        <label>Job title<input id="job-title" required></label>
-        <label>Location<input id="location" required></label>
+        <label>Department<input id="department" required></label><label>Job title<input id="job-title" required></label><label>Location<input id="location" required></label>
         <label>Employment type<select id="employment-type"><option>Full-time</option><option>Part-time</option><option>Contract</option><option>Intern</option></select></label>
         <label>Status<select id="employee-status"><option value="active">Active</option><option value="leave">On leave</option><option value="offboarded">Offboarded</option></select></label>
-        <label>Manager<input id="manager-name"></label>
-        <label>Start date<input id="start-date" type="date" required></label>
-        <label>End date<input id="end-date" type="date"></label>
+        <label>Manager<select id="manager-id"><option value="">No manager</option></select></label>
+        <label>Start date<input id="start-date" type="date" required></label><label>End date<input id="end-date" type="date"></label>
         <label id="salary-field">Salary<input id="salary" type="number" min="0" step="1000"></label>
-        <label>Onboarding %<input id="onboarding-progress" type="number" min="0" max="100"></label>
       </div>
-      <div class="dialog-actions">
-        <button type="button" class="danger ghost" id="archive-button">Offboard</button>
-        <span></span>
-        <button type="button" class="ghost" id="cancel-dialog-button">Cancel</button>
-        <button type="submit" class="primary" id="save-employee-button">Save changes</button>
+
+      <div class="employee-detail-grid" id="employee-detail-grid">
+        <section class="detail-card">
+          <div class="detail-head"><div><span class="eyebrow">LIFECYCLE</span><h3>Checklist</h3></div></div>
+          <div id="task-list" class="task-list"></div>
+          <% if (user.role !== 'viewer') { %>
+          <div class="task-create" id="task-create"><input id="new-task-title" placeholder="Add lifecycle task"><select id="new-task-phase"><option value="onboarding">Onboarding</option><option value="offboarding">Offboarding</option></select><button type="button" class="ghost" id="add-task-button">Add</button></div>
+          <% } %>
+        </section>
+        <section class="detail-card"><div class="detail-head"><div><span class="eyebrow">TIMELINE</span><h3>Employee history</h3></div></div><div id="timeline-list" class="timeline-list"></div></section>
       </div>
+
+      <div class="dialog-actions"><button type="button" class="danger ghost" id="archive-button">Start offboarding</button><span></span><button type="button" class="ghost" id="cancel-dialog-button">Cancel</button><button type="submit" class="primary" id="save-employee-button">Save changes</button></div>
     </form>
   </dialog>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/assets/app.js"></script>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div><script src="/assets/app.js"></script>
 </body>
 </html>

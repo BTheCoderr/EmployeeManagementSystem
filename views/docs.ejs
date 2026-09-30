@@ -1,0 +1,25 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="PeopleOps Console API documentation.">
+  <title>PeopleOps Console — API Docs</title><link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body class="docs-page">
+  <main class="docs-shell">
+    <a href="/login" class="docs-back">← PeopleOps Console</a>
+    <span class="eyebrow">API CONTRACT</span><h1>PeopleOps API</h1>
+    <p>The application exposes a documented JSON API backed by the same embedded SQLite database used by the server-rendered interface.</p>
+    <div class="endpoint-grid">
+      <article><span>GET</span><code>/api/employees</code><p>Paginated directory with search, filters, sorting, and role-aware fields.</p></article>
+      <article><span>PATCH</span><code>/api/employees/:id</code><p>Optimistic-concurrency employee updates for managers and admins.</p></article>
+      <article><span>GET</span><code>/api/employees/:id/timeline</code><p>Structured employee lifecycle history.</p></article>
+      <article><span>GET / POST</span><code>/api/employees/:id/tasks</code><p>Onboarding and offboarding workflow tasks.</p></article>
+      <article><span>GET</span><code>/api/org</code><p>Reporting relationships and team structure.</p></article>
+      <article><span>GET</span><code>/api/analytics</code><p>Operational workforce aggregates.</p></article>
+    </div>
+    <a class="primary docs-json" href="/api/openapi.json">Open OpenAPI JSON</a>
+  </main>
+</body>
+</html>

@@ -1,9 +1,10 @@
+
 <!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="PeopleOps Console is a secure employee operations dashboard with role-based access control, audit history, and SQLite persistence.">
+  <meta name="description" content="PeopleOps Console is a secure employee operations dashboard with role-based access control, audit history, and local SQLite persistence.">
   <title>PeopleOps Console — Sign in</title>
   <link rel="stylesheet" href="/assets/styles.css">
 </head>
@@ -12,29 +13,26 @@
     <section class="auth-brand">
       <span class="eyebrow">EMPLOYEE OPERATIONS PLATFORM</span>
       <h1>PeopleOps<br><span>Console.</span></h1>
-      <p>A portfolio-grade rebuild focused on backend architecture, authorization, data integrity, auditability, and useful operations UX.</p>
-      <div class="auth-points">
-        <span>SQLite persistence</span><span>Role-based access</span><span>Audit history</span><span>CI tested</span>
-      </div>
+      <p>A backend-focused employee operations system demonstrating authentication, authorization, local relational data, migrations, lifecycle workflows, auditability, and tested APIs.</p>
+      <div class="auth-points"><span>Embedded SQLite</span><span>RBAC</span><span>Schema migrations</span><span>CI tested</span></div>
     </section>
     <section class="auth-card">
-      <div>
-        <span class="eyebrow">SECURE ACCESS</span>
-        <h2>Sign in</h2>
-        <p>Use one of the local demo roles or credentials supplied through environment variables.</p>
-      </div>
+      <div><span class="eyebrow">SECURE ACCESS</span><h2>Sign in</h2><p>Authentication uses scrypt password hashes and signed HttpOnly sessions.</p></div>
       <% if (error) { %><div class="alert"><%= error %></div><% } %>
       <form method="post" action="/login" class="auth-form">
-        <label>Email<input type="email" name="email" autocomplete="username" required placeholder="admin@peopleops.local"></label>
+        <label>Email<input type="email" name="email" autocomplete="username" required placeholder="you@example.com"></label>
         <label>Password<input type="password" name="password" autocomplete="current-password" required placeholder="••••••••••"></label>
         <button type="submit" class="primary">Sign in</button>
       </form>
+      <% if (demoMode) { %>
       <div class="demo-roles">
-        <strong>Local demo accounts</strong>
+        <strong>Local development demo roles</strong>
         <button type="button" data-demo-email="admin@peopleops.local" data-demo-password="AdminDemo2026!">Admin</button>
         <button type="button" data-demo-email="manager@peopleops.local" data-demo-password="ManagerDemo2026!">Manager</button>
         <button type="button" data-demo-email="viewer@peopleops.local" data-demo-password="ViewerDemo2026!">Viewer</button>
       </div>
+      <% } %>
+      <a class="docs-link" href="/docs">API documentation →</a>
     </section>
   </main>
   <script src="/assets/login.js"></script>

@@ -1,0 +1,84 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PeopleOps Console API",
+    "version": "2.1.0",
+    "description": "Local-first employee operations API backed by embedded SQLite. Mutation routes require an authenticated signed session and CSRF token."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Service and schema health"
+      }
+    },
+    "/api/session": {
+      "get": {
+        "summary": "Current authenticated user and CSRF token"
+      }
+    },
+    "/api/summary": {
+      "get": {
+        "summary": "Workforce summary metrics"
+      }
+    },
+    "/api/analytics": {
+      "get": {
+        "summary": "Workforce aggregate breakdowns"
+      }
+    },
+    "/api/org": {
+      "get": {
+        "summary": "Reporting relationships"
+      }
+    },
+    "/api/employees": {
+      "get": {
+        "summary": "Paginated employee directory"
+      },
+      "post": {
+        "summary": "Create employee (admin)"
+      }
+    },
+    "/api/employees/{id}": {
+      "get": {
+        "summary": "Employee record"
+      },
+      "patch": {
+        "summary": "Version-checked update (admin/manager)"
+      }
+    },
+    "/api/employees/{id}/timeline": {
+      "get": {
+        "summary": "Employee lifecycle timeline"
+      }
+    },
+    "/api/employees/{id}/tasks": {
+      "get": {
+        "summary": "Lifecycle tasks"
+      },
+      "post": {
+        "summary": "Create lifecycle task (admin/manager)"
+      }
+    },
+    "/api/employees/{id}/archive": {
+      "post": {
+        "summary": "Start offboarding (admin)"
+      }
+    },
+    "/api/tasks/{id}": {
+      "patch": {
+        "summary": "Complete or reopen lifecycle task (admin/manager)"
+      }
+    },
+    "/api/audit": {
+      "get": {
+        "summary": "Recent audit events (admin/manager)"
+      }
+    }
+  }
+}
