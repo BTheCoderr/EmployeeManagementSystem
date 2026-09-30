@@ -4,6 +4,9 @@
 ## Unreleased
 
 ### Added
+- native Node test coverage reporting with enforced line/function/branch floors
+- dedicated security regression suite for sessions, RBAC, CSRF, headers, and sensitive-field leakage
+- separate CI dependency-audit security job
 - preview-first CSV employee import with row-level validation
 - manager-by-email resolution for bulk imports
 - all-or-nothing transactional import with lifecycle and audit records

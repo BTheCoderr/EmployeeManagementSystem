@@ -118,6 +118,8 @@ npm run ci
 
 The integration suite covers migrations, authentication, tampered sessions, security headers, RBAC, compensation isolation, pagination, manager relationships, onboarding tasks, task-driven progress, timelines, optimistic-concurrency conflicts, offboarding, CSRF, login throttling, production credential hiding, and OpenAPI delivery.
 
+CI now runs the test suite with Node's native coverage collector and enforces baseline floors of **60% lines, 50% functions, and 40% branches**. A separate security job runs focused authorization/session/header/data-leakage regressions plus `npm audit --omit=dev --audit-level=high`.
+
 ## Why embedded SQLite?
 
 SQLite still gives this project a real relational database: tables, constraints, foreign keys, indexes, migrations, transactions, and query behavior. The difference is that it is an embedded local file rather than infrastructure we have to buy.

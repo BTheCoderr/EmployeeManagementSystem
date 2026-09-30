@@ -10,9 +10,10 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  quality:
+    name: tests + coverage
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 6
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,5 +23,23 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm install --ignore-scripts
-      - name: Syntax checks and tests
+      - name: Syntax checks and coverage gates
         run: npm run ci
+
+  security:
+    name: security regression + dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Security regression tests
+        run: node --test tests/security.test.js
