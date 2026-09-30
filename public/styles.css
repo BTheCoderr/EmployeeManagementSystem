@@ -29,3 +29,6 @@ dialog{width:min(720px,calc(100% - 24px));border:0;padding:0;background:transpar
 
 .header-link{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:9px;white-space:nowrap}
 @media(max-width:780px){.header-actions{flex-wrap:wrap}.header-link{min-height:36px}}
+
+.timeline-diffs{display:grid;gap:5px;margin:8px 0}.diff-row{display:grid;grid-template-columns:minmax(72px,auto) minmax(0,1fr) 14px minmax(0,1fr);gap:6px;align-items:center;padding:6px 7px;border:1px solid var(--line);border-radius:9px;background:rgba(255,255,255,.025);font-size:8px}.diff-row>span{color:var(--muted);font-weight:900;text-transform:capitalize}.diff-row del,.diff-row ins{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none}.diff-row del{color:var(--danger)}.diff-row ins{color:var(--accent)}.diff-row b{text-align:center;color:var(--muted)}
+@media(max-width:520px){.diff-row{grid-template-columns:1fr}.diff-row b{display:none}.diff-row del:before{content:"From: ";color:var(--muted)}.diff-row ins:before{content:"To: ";color:var(--muted)}}

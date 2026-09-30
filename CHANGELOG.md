@@ -4,6 +4,8 @@
 ## Unreleased
 
 ### Added
+- structured before/after field diffs in the employee timeline
+- compensation-redaction coverage for historical change payloads
 - admin-only sanitized JSON backup export for the complete local workspace
 - admin-only employee CSV export for portable directory data
 - export RBAC and sensitive-field tests

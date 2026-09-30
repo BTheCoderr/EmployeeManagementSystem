@@ -216,3 +216,28 @@ test('backup and CSV exports are admin-only', async t => {
   assert.ok(text.startsWith('id,first_name,last_name'));
   assert.ok(text.includes('avery.morgan@example.test'));
 });
+
+
+test('employee timeline stores useful diffs while redacting compensation values', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+  const employee=await h.request('/api/employees/1',{headers:{cookie:admin.cookie}}).then(r => r.json());
+
+  const update=await h.request('/api/employees/1',{
+    method:'PATCH',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify({
+      job_title:'Principal Frontend Engineer',
+      salary:Number(employee.salary || 0) + 5000,
+      expected_version:employee.version
+    })
+  });
+  assert.equal(update.status,200);
+
+  const timeline=await h.request('/api/employees/1/timeline',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  const event=timeline.find(item => item.event_type === 'updated' && item.changes?.job_title);
+  assert.ok(event);
+  assert.equal(event.changes.job_title.to,'Principal Frontend Engineer');
+  assert.deepEqual(event.changes.salary,{from:'[restricted]',to:'[restricted]'});
+  assert.equal(JSON.stringify(event).includes(String(employee.salary)),false);
+});

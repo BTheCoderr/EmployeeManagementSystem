@@ -58,6 +58,8 @@ Creating an employee generates an onboarding checklist. Completing onboarding ta
 
 Starting offboarding creates a separate checklist and records lifecycle events. Employee timelines are distinct from the global audit log: the timeline explains what happened to one employee, while the audit trail records operational actions across the application.
 
+Update timeline events include structured before/after diffs for changed fields. Compensation history is deliberately redacted in those diffs, so the timeline can explain that compensation changed without copying sensitive values into historical event payloads.
+
 ## Concurrency safety
 
 Employee and lifecycle-task records use integer versions. Update requests carry the version originally read by the browser. When another update wins first, PeopleOps returns `409 Conflict` instead of silently overwriting newer data.

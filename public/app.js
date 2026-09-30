@@ -131,10 +131,47 @@ function renderTasks() {
   `).join('') : '<div class="empty">No lifecycle tasks yet.</div>';
 }
 
+function changeLabel(field) {
+  return ({
+    first_name:'First name',
+    last_name:'Last name',
+    email:'Email',
+    department:'Department',
+    job_title:'Job title',
+    location:'Location',
+    employment_type:'Employment type',
+    status:'Status',
+    manager_id:'Manager ID',
+    manager_name:'Manager',
+    start_date:'Start date',
+    end_date:'End date',
+    salary:'Compensation'
+  })[field] || field.replaceAll('_',' ');
+}
+
+function renderChangeDiffs(changes) {
+  if (!changes || typeof changes !== 'object') return '';
+  const entries=Object.entries(changes);
+  if (!entries.length) return '';
+  return '<div class="timeline-diffs">' + entries.map(([field,change]) => {
+    const from=change?.from == null || change.from === '' ? '—' : String(change.from);
+    const to=change?.to == null || change.to === '' ? '—' : String(change.to);
+    return `<div class="diff-row"><span>${escapeHtml(changeLabel(field))}</span><del>${escapeHtml(from)}</del><b>→</b><ins>${escapeHtml(to)}</ins></div>`;
+  }).join('') + '</div>';
+}
+
 function renderTimeline() {
   if (!state.selected) return;
   $('timeline-list').innerHTML=state.timeline.length ? state.timeline.map(event => `
-    <article class="timeline-item"><span></span><div><strong>${escapeHtml(event.event_type.replaceAll('_',' '))}</strong><p>${escapeHtml(event.detail)}</p><small>${escapeHtml(event.actor_name)} · ${new Date(event.created_at + 'Z').toLocaleString()}</small></div></article>
+    <article class="timeline-item">
+      <span></span>
+      <div>
+        <strong>${escapeHtml(event.event_type.replaceAll('_',' '))}</strong>
+        <p>${escapeHtml(event.detail)}</p>
+        ${renderChangeDiffs(event.changes)}
+        <small>${escapeHtml(event.actor_name)} · ${new Date(event.created_at + 'Z').toLocaleString()}</small>
+      </div>
+    </article>
   `).join('') : '<div class="empty">No timeline events yet.</div>';
 }
 
