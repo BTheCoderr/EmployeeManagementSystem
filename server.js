@@ -379,6 +379,131 @@ function createApp(options={}) {
     res.json(db.prepare('SELECT * FROM lifecycle_tasks WHERE id=?').get(task.id));
   });
 
+  const parseCsv=text => {
+    const rows=[];
+    let row=[],field='',quoted=false;
+    const input=String(text || '').replace(/^\uFEFF/,'');
+    for (let i=0;i<input.length;i++) {
+      const char=input[i];
+      if (quoted) {
+        if (char === '"' && input[i+1] === '"') { field+='"'; i++; }
+        else if (char === '"') quoted=false;
+        else field+=char;
+      } else if (char === '"') quoted=true;
+      else if (char === ',') { row.push(field); field=''; }
+      else if (char === '\n') { row.push(field.replace(/\r$/,'')); rows.push(row); row=[]; field=''; }
+      else field+=char;
+    }
+    if (quoted) throw new Error('CSV contains an unterminated quoted field.');
+    if (field.length || row.length) { row.push(field.replace(/\r$/,'')); rows.push(row); }
+    return rows.filter(values => values.some(value => String(value).trim() !== ''));
+  };
+
+  const validateEmployeeCsv=text => {
+    let rows;
+    try { rows=parseCsv(text); }
+    catch (error) { return {valid:false,issues:[error.message],rows:[],summary:{total:0,valid:0,invalid:0}}; }
+
+    if (rows.length < 2) return {valid:false,issues:['CSV needs a header row and at least one employee row.'],rows:[],summary:{total:0,valid:0,invalid:0}};
+    const headers=rows[0].map(value => safeText(value,80).toLowerCase());
+    const required=['first_name','last_name','email','department','job_title','location','employment_type','status','start_date'];
+    const missing=required.filter(name => !headers.includes(name));
+    if (missing.length) return {valid:false,issues:[`Missing required columns: ${missing.join(', ')}.`],rows:[],summary:{total:rows.length-1,valid:0,invalid:rows.length-1}};
+
+    const known=new Set([...required,'manager_email','end_date','salary']);
+    const existingEmails=new Set(db.prepare('SELECT email FROM employees').all().map(row => String(row.email).toLowerCase()));
+    const fileEmails=new Set();
+    const output=[];
+
+    for (let index=1;index<rows.length;index++) {
+      const values=rows[index],raw={};
+      headers.forEach((header,column) => { if (known.has(header)) raw[header]=safeText(values[column] ?? '',header === 'job_title' ? 100 : 180); });
+      raw.email=String(raw.email || '').toLowerCase();
+      raw.manager_email=String(raw.manager_email || '').toLowerCase();
+      const errors=[];
+      for (const field of required) if (!raw[field]) errors.push(`${field} is required`);
+      if (raw.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(raw.email)) errors.push('email is invalid');
+      if (raw.manager_email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(raw.manager_email)) errors.push('manager_email is invalid');
+      if (raw.manager_email && raw.manager_email === raw.email) errors.push('employee cannot manage themselves');
+      if (raw.employment_type && !allowedEmployment.has(raw.employment_type)) errors.push('employment_type is invalid');
+      if (raw.status && !allowedStatuses.has(raw.status)) errors.push('status is invalid');
+      if (raw.salary && (!Number.isFinite(Number(raw.salary)) || Number(raw.salary) < 0)) errors.push('salary must be a non-negative number');
+      if (existingEmails.has(raw.email)) errors.push('email already exists');
+      if (fileEmails.has(raw.email)) errors.push('email is duplicated in this CSV');
+      if (raw.email) fileEmails.add(raw.email);
+
+      output.push({line:index+1,data:raw,errors});
+    }
+
+    const importEmails=new Set(output.filter(row => !row.errors.length).map(row => row.data.email));
+    for (const row of output) {
+      if (row.data.manager_email && !existingEmails.has(row.data.manager_email) && !importEmails.has(row.data.manager_email)) {
+        row.errors.push('manager_email does not match an existing or imported employee');
+      }
+    }
+
+    const validCount=output.filter(row => !row.errors.length).length;
+    const invalidCount=output.length-validCount;
+    return {
+      valid:invalidCount === 0 && output.length > 0,
+      issues:invalidCount ? [`${invalidCount} row${invalidCount === 1 ? '' : 's'} need attention before import.`] : [],
+      rows:output.slice(0,100),
+      summary:{total:output.length,valid:validCount,invalid:invalidCount}
+    };
+  };
+
+  app.post('/api/import/csv/validate',requireAuth,requireRole('admin'),requireCsrf,(req,res) => {
+    const csv=typeof req.body?.csv === 'string' ? req.body.csv : '';
+    if (Buffer.byteLength(csv,'utf8') > 1_000_000) return res.status(413).json({error:'CSV import is limited to 1 MB.',requestId:req.requestId});
+    const validation=validateEmployeeCsv(csv);
+    res.status(validation.valid ? 200 : 400).json(validation);
+  });
+
+  app.post('/api/import/csv',requireAuth,requireRole('admin'),requireCsrf,(req,res) => {
+    const csv=typeof req.body?.csv === 'string' ? req.body.csv : '';
+    if (Buffer.byteLength(csv,'utf8') > 1_000_000) return res.status(413).json({error:'CSV import is limited to 1 MB.',requestId:req.requestId});
+    const validation=validateEmployeeCsv(csv);
+    if (!validation.valid) return res.status(400).json(validation);
+
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const insert=db.prepare(`
+        INSERT INTO employees (
+          first_name,last_name,email,department,job_title,location,employment_type,status,
+          manager_name,manager_id,start_date,end_date,salary,onboarding_progress
+        ) VALUES (?,?,?,?,?,?,?,?,NULL,NULL,?,?,?,0)
+      `);
+      const created=[];
+      for (const item of validation.rows) {
+        const row=item.data;
+        const result=insert.run(
+          row.first_name,row.last_name,row.email,row.department,row.job_title,row.location,row.employment_type,row.status,
+          row.start_date,row.end_date || null,row.salary ? Math.round(Number(row.salary)) : null
+        );
+        const id=Number(result.lastInsertRowid);
+        created.push({id,email:row.email,manager_email:row.manager_email});
+        createDefaultTasks(db,id,row.status === 'offboarded' ? 'offboarding' : 'onboarding',req.user);
+        recordEmployeeEvent(db,id,req.user,'imported',`Imported ${row.first_name} ${row.last_name} from CSV`);
+      }
+
+      const findByEmail=db.prepare('SELECT id,first_name,last_name FROM employees WHERE email=?');
+      const setManager=db.prepare('UPDATE employees SET manager_id=?,manager_name=?,version=version+1 WHERE id=?');
+      for (const employee of created) {
+        if (!employee.manager_email) continue;
+        const manager=findByEmail.get(employee.manager_email);
+        if (!manager) throw new Error(`Manager disappeared during import: ${employee.manager_email}`);
+        setManager.run(Number(manager.id),`${manager.first_name} ${manager.last_name}`,employee.id);
+      }
+
+      audit(db,req.user,'import','employees',null,`Imported ${created.length} employees from CSV`);
+      db.exec('COMMIT');
+      res.status(201).json({ok:true,imported:created.length,employeeIds:created.map(item => item.id)});
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
+  });
+
   const csvCell=value => {
     const text=String(value ?? '');
     return /[",\n\r]/.test(text) ? '"' + text.replaceAll('"','""') + '"' : text;

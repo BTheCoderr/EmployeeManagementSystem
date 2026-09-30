@@ -23,6 +23,8 @@
         <a class="ghost header-link" href="/api/export">Backup JSON</a>
         <button class="ghost header-link" id="restore-backup-button" type="button">Restore backup</button>
         <input id="restore-backup-file" type="file" accept="application/json,.json" hidden>
+        <button class="ghost header-link" id="import-csv-button" type="button">Import CSV</button>
+        <input id="import-csv-file" type="file" accept="text/csv,.csv" hidden>
         <button class="primary" id="add-employee-button" type="button">+ Add employee</button>
         <% } %>
         <form method="post" action="/logout"><input type="hidden" name="csrf" value="<%= csrf %>"><button class="ghost" type="submit">Sign out</button></form>

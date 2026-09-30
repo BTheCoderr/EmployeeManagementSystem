@@ -307,6 +307,28 @@ $('restore-backup-file')?.addEventListener('change',async event => {
   }
 });
 
+$('import-csv-button')?.addEventListener('click',() => $('import-csv-file').click());
+$('import-csv-file')?.addEventListener('change',async event => {
+  const file=event.target.files?.[0];
+  event.target.value='';
+  if (!file) return;
+  try {
+    const csv=await file.text();
+    const validation=await api('/api/import/csv/validate',{method:'POST',body:JSON.stringify({csv})});
+    const approved=confirm(
+      `CSV validated.\n\nRows: ${validation.summary.total}\nReady to import: ${validation.summary.valid}\nErrors: ${validation.summary.invalid}\n\nImport these employees and create lifecycle records?`
+    );
+    if (!approved) return toast('CSV import cancelled.');
+    const result=await api('/api/import/csv',{method:'POST',body:JSON.stringify({csv})});
+    state.page=1;
+    await loadData();
+    toast(`${result.imported} employee${result.imported === 1 ? '' : 's'} imported.`);
+  } catch (error) {
+    const invalid=error.data?.rows?.find(row => row.errors?.length);
+    toast(invalid ? `Line ${invalid.line}: ${invalid.errors[0]}` : error.message);
+  }
+});
+
 let searchTimer;
 $('search-input').addEventListener('input',() => {
   clearTimeout(searchTimer); state.page=1;

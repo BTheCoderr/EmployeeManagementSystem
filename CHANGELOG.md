@@ -4,6 +4,10 @@
 ## Unreleased
 
 ### Added
+- preview-first CSV employee import with row-level validation
+- manager-by-email resolution for bulk imports
+- all-or-nothing transactional import with lifecycle and audit records
+- CSV import validation and RBAC integration coverage
 - validate-first JSON backup restore with relational integrity checks and transactional writes
 - restore preserves authentication users/password hashes while replacing employee workflow data
 - restore authorization, validation, rollback-safe behavior, and round-trip coverage

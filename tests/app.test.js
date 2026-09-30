@@ -303,3 +303,74 @@ test('backup restore is admin-only', async t => {
   });
   assert.equal(response.status,403);
 });
+
+
+test('CSV import previews and transactionally creates employees with manager links', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+  const csv=[
+    'first_name,last_name,email,department,job_title,location,employment_type,status,manager_email,start_date,end_date,salary',
+    'Morgan,Rivera,morgan.rivera@example.test,Engineering,Staff Engineer,Remote,Full-time,active,jordan.lee@example.test,2026-10-03,,125000',
+    'Casey,Nguyen,casey.nguyen@example.test,Engineering,Software Engineer,Providence RI,Full-time,active,morgan.rivera@example.test,2026-10-04,,105000'
+  ].join('\n');
+
+  const preview=await h.request('/api/import/csv/validate',{
+    method:'POST',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify({csv})
+  });
+  assert.equal(preview.status,200);
+  const validation=await preview.json();
+  assert.deepEqual(validation.summary,{total:2,valid:2,invalid:0});
+
+  const imported=await h.request('/api/import/csv',{
+    method:'POST',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify({csv})
+  });
+  assert.equal(imported.status,201);
+  assert.equal((await imported.json()).imported,2);
+
+  const directory=await h.request('/api/employees?search=casey.nguyen@example.test',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  assert.equal(directory.employees.length,1);
+  const casey=directory.employees[0];
+  const morgan=await h.request('/api/employees?search=morgan.rivera@example.test',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  assert.equal(Number(casey.manager_id),Number(morgan.employees[0].id));
+
+  const tasks=await h.request('/api/employees/' + casey.id + '/tasks',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  assert.equal(tasks.length,4);
+});
+
+test('CSV import rejects invalid or duplicate rows before mutation', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const admin=await h.login('admin@peopleops.local','AdminDemo2026!');
+  const before=await h.request('/api/employees',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  const csv=[
+    'first_name,last_name,email,department,job_title,location,employment_type,status,start_date',
+    'Bad,Row,avery.morgan@example.test,Engineering,Engineer,Remote,Full-time,active,2026-10-03',
+    'Also,Bad,not-an-email,Engineering,Engineer,Remote,Full-time,active,2026-10-03'
+  ].join('\n');
+
+  const response=await h.request('/api/import/csv',{
+    method:'POST',
+    headers:{cookie:admin.cookie,'Content-Type':'application/json','X-CSRF-Token':admin.csrf},
+    body:JSON.stringify({csv})
+  });
+  assert.equal(response.status,400);
+  const body=await response.json();
+  assert.equal(body.summary.invalid,2);
+
+  const after=await h.request('/api/employees',{headers:{cookie:admin.cookie}}).then(r => r.json());
+  assert.equal(after.pagination.total,before.pagination.total);
+});
+
+test('CSV import is admin-only', async t => {
+  const h=await createHarness(); t.after(h.close);
+  const viewer=await h.login('viewer@peopleops.local','ViewerDemo2026!');
+  const response=await h.request('/api/import/csv/validate',{
+    method:'POST',
+    headers:{cookie:viewer.cookie,'Content-Type':'application/json','X-CSRF-Token':viewer.csrf},
+    body:JSON.stringify({csv:'first_name,last_name\nA,B'})
+  });
+  assert.equal(response.status,403);
+});

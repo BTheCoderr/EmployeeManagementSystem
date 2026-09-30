@@ -99,6 +99,16 @@
       "post": {
         "summary": "Restore validated employee/workflow data while preserving authentication users (admin)"
       }
+    },
+    "/api/import/csv/validate": {
+      "post": {
+        "summary": "Preview and validate employee CSV import (admin)"
+      }
+    },
+    "/api/import/csv": {
+      "post": {
+        "summary": "Import validated employee CSV transactionally (admin)"
+      }
     }
   }
 }
