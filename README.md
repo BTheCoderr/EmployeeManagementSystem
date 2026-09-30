@@ -1,5 +1,11 @@
 # PeopleOps Console
 
+<!-- repo-intro:start -->
+**Project snapshot:** PeopleOps Console is a security-focused employee operations dashboard demonstrating authentication, RBAC, SQLite persistence, CSRF defenses, audit history, API testing, and CI.
+
+**What it demonstrates:** Node.js · Express · SQLite · RBAC/security · tests/CI.
+<!-- repo-intro:end -->
+
 ![CI](https://github.com/BTheCoderr/EmployeeManagementSystem/actions/workflows/ci.yml/badge.svg)
 
 **PeopleOps Console is a secure employee-operations dashboard built to demonstrate backend/API architecture, role-based access control, data persistence, auditability, and production-minded web security.**
