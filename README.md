@@ -1,61 +1,88 @@
-# Employee Management System
-This is a simple web application for managing employee data. It allows users to add new employees to the database using a web form.
+# PeopleOps Console
 
-## Description
+![CI](https://github.com/BTheCoderr/EmployeeManagementSystem/actions/workflows/ci.yml/badge.svg)
 
-This is a web application for managing employee records. It allows users to add new employees to the database, including details such as first name, last name, department, job title, start date, end date (if applicable), and salary. The application is built using Node.js, Express.js, EJS templates, and MySQL for the database.
+**PeopleOps Console is a secure employee-operations dashboard built to demonstrate backend/API architecture, role-based access control, data persistence, auditability, and production-minded web security.**
 
-## Installation
+The repository began as a small Express/MySQL employee-form exercise. It has been rebuilt around a clearer product model and a more defensible engineering surface: authenticated roles, SQLite persistence, field-level authorization, CSRF protection, audit history, API tests, and CI.
 
-### 1. Clone the repository to your local machine.
-git clone https://github.com/your-username/employee-management-system.git
+## Engineering highlights
 
-### 2. Install the necessary dependencies by running `npm install`.
-cd employee-management-system
+| Area | Implementation |
+| --- | --- |
+| Runtime | Node.js 24 |
+| Web layer | Express 5 + server-rendered EJS |
+| Database | Built-in `node:sqlite` / SQLite |
+| Authentication | Scrypt password hashing + signed HttpOnly session cookies |
+| Authorization | Admin / Manager / Viewer RBAC |
+| Field security | Compensation visible/editable only to admins |
+| Request security | CSRF validation, secure cookie flags, rate-limited login attempts |
+| Auditing | Login, logout, create, update, and offboarding events |
+| Employee lifecycle | Active, leave, and offboarded states |
+| Quality | Node test runner + GitHub Actions CI |
 
-### 3. Install dependencies:
+## Roles
+
+**Admin** can view compensation, create employee records, edit all employee fields, offboard employees, and inspect the audit trail.
+
+**Manager** can view the directory, update operational employee fields, and inspect the audit trail. Compensation remains restricted.
+
+**Viewer** has read-only directory access. Compensation and audit history are not exposed.
+
+## Local demo accounts
+
+Development seeds three local-only demo roles when the database is empty:
+
+```text
+admin@peopleops.local   / AdminDemo2026!
+manager@peopleops.local / ManagerDemo2026!
+viewer@peopleops.local  / ViewerDemo2026!
+```
+
+For production-like use, provide passwords through environment variables instead of relying on demo defaults.
+
+## Run locally
+
+Requires Node.js 24+.
+
+```bash
 npm install
-
-
-### 4. Create a .env file in the project root directory and add the following environment variables:
-PORT=3000<br>
-DB_HOST=localhost<br>
-DB_USER=username<br>
-DB_PASSWORD=password<br>
-DB_NAME=employee_db<br>
-DB_TABLE_NAME=employees<br>
-
-### 5. Start the server:
+cp .env.example .env
 npm start
+```
 
-### 6. Open your web browser and go to http://localhost:3000 to access the application.
+The application creates `data/peopleops.sqlite` automatically. The database is ignored by Git.
 
+Open:
 
-## Technologies Used
-<li>Node.js</li>
-<li>Express.js</li>
-<li>MySql</li>
-<li>EJS (Embedded JavaScript)</li>
-<li>HTML</li>
-<li>CSS</li>
-<br><br>
+```text
+http://localhost:3000
+```
 
+## Tests
 
-## Screenshots
+```bash
+npm run ci
+```
 
+The integration tests exercise the actual Express app and SQLite layer, including authentication, RBAC, field-level compensation controls, employee creation, audit logging, and CSRF enforcement.
 
-### Login Page
-![Screenshot 2024-05-20 at 11 26 43 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/d3f9efac-c2a7-43f7-bfb4-359e189af358)
-<br><br>
+## Security decisions
 
-### Add Employee Page
-![Screenshot 2024-05-20 at 11 27 47 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/b4f3be8a-602f-4d23-87fb-01f4951c2bbf)
-<br><br>
+Passwords are never stored in plaintext. Credentials are hashed with Node's built-in `scrypt` implementation and a per-password salt.
 
-### Employee Added Successfully Page
-![Screenshot 2024-05-20 at 11 27 09 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/635c4195-88c3-40ec-932a-f264fee6033a)
-<br><br>
+Session state is signed and stored in an HttpOnly, SameSite cookie. Production mode adds the Secure flag. A CSRF token is embedded in the signed session and required for mutation APIs.
 
-### Employee List Page
-![Screenshot 2024-05-20 at 11 27 23 PM](https://github.com/BTheCoderr/EmployeeManagementSystem/assets/110173147/66389994-49a1-4187-9ce9-d02bc3d34645)
-<br><br>
+The application removes Express's identifying response header and adds CSP, clickjacking, referrer, MIME-sniffing, and browser-permission headers.
+
+## Persistence
+
+The default database is SQLite and costs nothing to run locally. That makes the repository fully testable without provisioning a paid database or external service.
+
+A future hosted deployment can swap the persistence layer for Postgres/Supabase without changing the product model. The current portfolio version intentionally stays $0-first.
+
+## Project evolution
+
+The original repository was useful as an early Node/MySQL learning exercise, but it exposed beginner patterns such as plaintext password comparisons, a hard-coded session secret, and unstructured routes.
+
+PeopleOps Console replaces those patterns instead of hiding them. The current repository is intended to show the engineering decisions a reviewer should evaluate today: authentication, authorization, validation, database design, auditability, testing, and maintainable separation between UI, security, and persistence.
